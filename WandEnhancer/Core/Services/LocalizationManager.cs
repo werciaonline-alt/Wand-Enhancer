@@ -23,7 +23,9 @@ namespace WandEnhancer.Core.Services
             new CultureInfo("ru-RU"),
             new CultureInfo("uk-UA"),
             new CultureInfo("ja-JP"),
-            new CultureInfo("tr-TR")
+            new CultureInfo("tr-TR"),
+            new CultureInfo("ar-SA"),
+            new CultureInfo("bn-BD")
         };
 
         private static CultureInfo _currentLanguage;
