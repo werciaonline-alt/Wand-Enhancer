@@ -28,6 +28,9 @@ namespace WandEnhancer
             AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
             TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
 
+            if (TryWatchMode(args))
+                return;
+
             if (TryLaunchMode(args))
                 return;
 
@@ -43,6 +46,22 @@ namespace WandEnhancer
 
             application.MainWindow = window;
             application.Run();
+        }
+
+        /// <summary>
+        /// Background-watcher mode: <c>--watch-updates &lt;squirrelRoot&gt;</c>. Blocks until told to
+        /// stop; never touches the UI. Deployed and started by
+        /// <see cref="Core.Services.WatcherAutostart"/>, not something a user runs by hand.
+        /// </summary>
+        private static bool TryWatchMode(string[] args)
+        {
+            if (args.Length < 2 || !string.Equals(args[0], "--watch-updates", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            string squirrelRoot = args[1];
+            LauncherLog.Open(squirrelRoot, $"WandEnhancerWatcher {Constants.Version} build {Constants.Build} | root {squirrelRoot}");
+            Core.Services.UpdateWatcherService.Run(squirrelRoot, LauncherLog.Write);
+            return true;
         }
 
         private static bool TryLaunchMode(string[] args)
@@ -66,7 +85,7 @@ namespace WandEnhancer
             if (args.Length > 0 &&
                 args[0].StartsWith("--squirrel", StringComparison.OrdinalIgnoreCase))
             {
-                string updateExe = Path.Combine(myDir, "Update.exe");
+                string updateExe = Path.Combine(myDir, Constants.SquirrelUpdaterFileName);
                 if (File.Exists(updateExe))
                 {
                     LauncherLog.Write($"Squirrel hook {args[0]} forwarded to Update.exe.", ELogType.Info);
@@ -157,7 +176,7 @@ namespace WandEnhancer
         /// <summary>
         /// Describes applied patches for diagnostic logs. Unrecorded if auto-patch is off.
         /// </summary>
-        private static string DescribePatches(PatchConfig patchConfig)
+        internal static string DescribePatches(PatchConfig patchConfig)
         {
             if (patchConfig?.PatchTypes == null)
                 return "unrecorded";
